@@ -7,7 +7,7 @@ const { name } = require("ejs");
 const app = express();
 const _ = require("lodash");
 
-mongoose.connect("mongodb://localhost:27017/todolistDB");
+mongoose.connect(process.env.DB || "mongodb://localhost:27017/todolistDB");
 
 const itemsSchema = mongoose.Schema({
   name: {
@@ -96,7 +96,6 @@ app.get("/:custom", function (req, res) {
   const customListName = _.capitalize(req.params.custom);
 
   List.findOne({ name: customListName }).then(function (foundList) {
-    console.log(foundList);
     if (!foundList) {
       let list = new List({
         name: customListName,
@@ -106,7 +105,6 @@ app.get("/:custom", function (req, res) {
       Item.insertMany(defaultItems);
       res.redirect("/" + customListName);
     } else {
-      console.log(foundList);
       res.render("list", {
         listTitle: customListName,
         newListItems: foundList.items,
@@ -119,6 +117,6 @@ app.get("/about", function (req, res) {
   res.render("about");
 });
 
-app.listen(3000, function () {
+app.listen(process.env.PORT || 3000, function () {
   console.log("Server started on port 3000");
 });
