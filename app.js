@@ -1,5 +1,5 @@
 //jshint esversion:6
-
+const baseFolder = process.env.BASE || "todo";
 const express = require("express");
 const bodyParser = require("body-parser");
 const mongoose = require("mongoose");
@@ -46,19 +46,19 @@ const defaultItems = [item1, item2, item3];
 
 const workItems = [];
 
-app.get("/", function (req, res) {
+app.get("/" + baseFolder, function (req, res) {
   const title = "Today";
   Item.find({}).then(function (items) {
     if (items.length == 0) {
       Item.insertMany(defaultItems);
-      res.redirect("/");
+      res.redirect("/" + baseFolder);
     } else {
       res.render("list", { listTitle: title, newListItems: items });
     }
   });
 });
 
-app.post("/", function (req, res) {
+app.post("/" + baseFolder, function (req, res) {
   const itemName = req.body.newItem;
   const listName = req.body.list;
   let newItem = new Item({
@@ -66,33 +66,33 @@ app.post("/", function (req, res) {
   });
   if (req.body.list === "Today") {
     newItem.save();
-    res.redirect("/");
+    res.redirect("/" + baseFolder);
   } else {
     List.findOne({ name: listName }).then(function (foundList) {
       foundList.items.push(newItem);
       foundList.save();
-      res.redirect("/" + listName);
+      res.redirect("/" + baseFolder + "/" + listName);
     });
   }
 });
 
-app.post("/delete", function (req, res) {
+app.post("/" + baseFolder + "/delete", function (req, res) {
   const checkedItemId = req.body.checkbox;
   const listName = req.body.listName;
 
   if (listName === "Today") {
     Item.deleteOne({ _id: checkedItemId }).then();
-    res.redirect("/");
+    res.redirect("/" + baseFolder);
   } else {
     List.findOneAndUpdate(
       { name: listName },
       { $pull: { items: { _id: checkedItemId } } }
     ).then();
-    res.redirect("/" + listName);
+    res.redirect("/" + baseFolder + "/" + listName);
   }
 });
 
-app.get("/:custom", function (req, res) {
+app.get("/" + baseFolder + "/:custom", function (req, res) {
   const customListName = _.capitalize(req.params.custom);
 
   List.findOne({ name: customListName }).then(function (foundList) {
@@ -103,7 +103,7 @@ app.get("/:custom", function (req, res) {
       });
       list.save();
       Item.insertMany(defaultItems);
-      res.redirect("/" + customListName);
+      res.redirect("/" + baseFolder + "/" + customListName);
     } else {
       res.render("list", {
         listTitle: customListName,
@@ -111,10 +111,6 @@ app.get("/:custom", function (req, res) {
       });
     }
   });
-});
-
-app.get("/about", function (req, res) {
-  res.render("about");
 });
 
 app.listen(process.env.PORT || 3000, function () {
